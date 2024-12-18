@@ -41,8 +41,23 @@ download_release() {
 	version="$1"
 	filename="$2"
 
+
+	local platform
+	case "$OSTYPE" in
+		darwin*) platform="apple-darwin" ;;
+		linux*) platform="unknown-linux-musl" ;;
+		*) fail "Unsupported platform" ;;
+	esac
+
+	local architecture
+	case "$(uname -m)" in
+		x86_64) architecture="x86_64" ;;
+		arm64) architecture="aarch64" ;; # no armv64 build :(
+		*) fail "Unsupported architecture" ;;
+	esac
+
 	# TODO: Adapt the release URL convention for aichat
-	url="$GH_REPO/archive/v${version}.tar.gz"
+	url="$GH_REPO/releases/download/v${version}/aichat-v${version}-${architecture}-${platform}.tar.gz"
 
 	echo "* Downloading $TOOL_NAME release $version..."
 	curl "${curl_opts[@]}" -o "$filename" -C - "$url" || fail "Could not download $url"
@@ -60,7 +75,6 @@ install_version() {
 	(
 		mkdir -p "$install_path"
 		cp -r "$ASDF_DOWNLOAD_PATH"/* "$install_path"
-
 		# TODO: Assert aichat executable exists.
 		local tool_cmd
 		tool_cmd="$(echo "$TOOL_TEST" | cut -d' ' -f1)"
